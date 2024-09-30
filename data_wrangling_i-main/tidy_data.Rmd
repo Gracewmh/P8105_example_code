@@ -73,7 +73,7 @@ analysis_df |>
     names_from = time, 
     values_from = mean
   ) |> 
-  knitr::kable()
+  knitr::kable()#format the R output into a markdown table
 ```
 
 
