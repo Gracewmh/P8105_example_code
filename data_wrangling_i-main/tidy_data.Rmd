@@ -37,12 +37,13 @@ litters_df =
   read_csv("data/FAS_litters.csv", na = c("NA", ".", "")) |> 
   janitor::clean_names() |> 
   pivot_longer(
-    cols = gd0_weight:gd18_weight,
+    cols = gd0_weight:gd18_weight,#select cols from 'gd0_weight' to 'gd18_weight'
     names_to = "gd_time", 
     values_to = "weight"
   ) |> 
   mutate(
     gd_time = case_match(
+#every time see "gd0_weight", replace it with 0; every time see "gd18_weight", replace it with 18
       gd_time,
       "gd0_weight" ~ 0,
       "gd18_weight" ~ 18
