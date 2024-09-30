@@ -26,7 +26,7 @@ pulse_df =
   mutate(
     visit = replace(visit, visit == "bl", "00m")
   ) |> 
-  relocate(id, visit)
+  relocate(id, visit) # relocate makes id and visits becomes the 1st and 2nd cols of data
 ```
 
 
