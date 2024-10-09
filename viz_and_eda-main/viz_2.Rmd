@@ -8,8 +8,27 @@ library(tidyverse)
 library(patchwork)
 library(haven)
 ```
+library(tidyverse)
 
-Import the weather data
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+
+# Import the weather data
 
 ```{r}
 weather_df = 
@@ -30,7 +49,7 @@ weather_df =
 ```
 
 
-Make a scatterplot but fancy this time.
+# Make a scatterplot but fancy this time.
 
 ```{r}
 weather_df |> 
@@ -45,7 +64,7 @@ weather_df |>
   )
 ```
 
-Scales -- start with `x` and `y` and then do `color`.
+## Scales -- start with `x` and `y` and then do `color`.
 
 ```{r}
 weather_df |> 
@@ -69,7 +88,7 @@ weather_df |>
 ```
 
 
-Look at color:
+## Look at color:
 
 ```{r}
 weather_df |> 
@@ -82,7 +101,7 @@ weather_df |>
     color = "Location", 
     caption = "Weather data taken from rnoaa package for three stations."
   ) + 
-  viridis::scale_color_viridis(discrete = TRUE)
+  viridis::scale_color_viridis(discrete = TRUE) # fancy color
 ```
 
 
@@ -106,13 +125,13 @@ ggp_scatterplot =
 ```
 
 ```{r}
-ggp_scatterplot + 
-  theme(legend.position = "bottom")
+ggp_scatterplot +  # 指代上面的所有内容
+  theme(legend.position = "bottom") # 图标放在下面
 ```
 
 ```{r}
 ggp_scatterplot + 
-  theme_bw() + 
+  theme_bw() +  #背景black an white, 没有条纹了
   theme(legend.position = "bottom")
 ```
 
@@ -180,8 +199,8 @@ molokai_df =
 
 molokai_df |> 
   ggplot(aes(x = date, y = tmax, color = name)) + 
-  geom_point() + 
-  geom_line(data = central_park_df)
+  geom_point() +                        # scatter points for molokai_df
+  geom_line(data = central_park_df)  #line for central_park_df
 ```
 
 
@@ -189,6 +208,7 @@ molokai_df |>
 
 ## Multiple panels
 
+### Category variable 每一个类别level分开展示
 ```{r}
 weather_df |> 
   ggplot(aes(x = tmax, fill = name)) + 
@@ -196,7 +216,7 @@ weather_df |>
   facet_grid(. ~ name)
 ```
 
-
+### 将几个图拼在一起
 ```{r}
 ggp_tmax_tmin = 
   weather_df |> 
@@ -214,15 +234,16 @@ ggp_tmax_date =
   geom_point() + 
   geom_smooth(se = FALSE)
 
+# 设置这几个图的位置:
 (ggp_tmax_tmin + ggp_tmax_density) / ggp_tmax_date
 ```
 
 
 ## Data manipulation
-
+给category排序
 ```{r}
 weather_df |> 
-  mutate(name = fct_relevel(name, c("Molokai_HI", "CentralPark_NY", "Waterhole_WA"))) |> 
+  mutate(name = fct_relevel(name, c("Molokai_HI", "CentralPark_NY", "Waterhole_WA"))) |>  # 给category排序 
   ggplot(aes(x = name, y = tmax, fill = name)) + 
   geom_violin(alpha = .5)
 ```
@@ -236,6 +257,7 @@ PULSE data next.
 pulse_df = 
   read_sas("data/public_pulse_data.sas7bdat") |> 
   janitor::clean_names() |> 
+#将4个variable 变成一个长的 2个variable(一列是4个category, 一列是对应的值)
   pivot_longer(
     cols = bdi_score_bl:bdi_score_12m,
     names_to = "visit", 
@@ -255,11 +277,12 @@ Make an FAS plot.
 
 
 ```{r}
+# 拆成2列, 以根据其中一个数字作为key组成两张表
 litters_df = 
   read_csv("data/FAS_litters.csv", na = c("NA", ".", "")) |> 
   janitor::clean_names() |> 
-  separate(group, into = c("dose", "tx_day"), 3)
-
+  separate(group, into = c("dose", "tx_day"), 3) Con7分开成“Con”和“7”
+# tidy data
 pups_df = 
   read_csv("data/FAS_pups.csv", na = c("NA", ".", "")) |> 
   janitor::clean_names() |> 
@@ -269,15 +292,15 @@ pups_df =
     values_to = "pn_day",
     names_prefix = "pd_"
   )
-  
+# 组合两张表  
 fas_df = 
   left_join(pups_df, litters_df, by = "litter_number")
 
 fas_df |> 
   drop_na(tx_day) |> 
-  ggplot(aes(x = dose, y = pn_day)) + 
+  ggplot(aes(x = dose, y = pn_day)) +    #每一个小图的x, y
   geom_boxplot() + 
-  facet_grid(tx_day ~ outcome)
+  facet_grid(tx_day ~ outcome)           #一整张大图的x, y
 ```
 
 
