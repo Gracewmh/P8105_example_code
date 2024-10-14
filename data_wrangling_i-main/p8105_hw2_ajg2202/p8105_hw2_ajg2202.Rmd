@@ -1,0 +1,280 @@
+---
+title: "Homework 2 solutions"
+author: "Jeff Goldsmith"
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
+```
+
+### Due date
+
+Due: October 2 at 11:59pm. 
+
+### Points
+
+| Problem         | Points    |
+|:--------------- |:--------- |
+| Problem 0       | 20        |
+| Problem 1       | --        |
+| Problem 2       | 40        |
+| Problem 3       | 40        |
+| Optional survey | No points |
+
+
+### Problem 0
+
+This solution focuses on a reproducible report containing code and text necessary for Problems 1-3, and is organized as an R Project. This was not prepared as a GitHub repo; examples for repository structure and git commits should be familiar from other elements of the course.
+
+Throughout, we use appropriate text to describe our code and results, and use clear styling to ensure code is readable. 
+
+```{r load_libraries}
+library(tidyverse)
+library(readxl)
+```
+
+
+### Problem 1
+
+Below we import and clean data from `NYC_Transit_Subway_Entrance_And_Exit_Data.csv`. The process begins with data import, updates variable names, and selects the columns that will be used in later parts fo this problem. We update `entry` from `yes` / `no` to a logical variable. As part of data import, we specify that `Route` columns 8-11 should be character for consistency with 1-7.
+
+```{r}
+trans_ent = 
+  read_csv(
+    "data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+    col_types = cols(Route8 = "c", Route9 = "c", Route10 = "c", Route11 = "c")) |> 
+  janitor::clean_names() |> 
+  select(
+    line, station_name, station_latitude, station_longitude, 
+    starts_with("route"), entry, exit_only, vending, entrance_type, 
+    ada) |> 
+  mutate(entry = ifelse(entry == "YES", TRUE, FALSE))
+```
+
+As it stands, these data are not "tidy": route number should be a variable, as should route. That is, to obtain a tidy dataset we would need to convert `route` variables from wide to long format. This will be useful when focusing on specific routes, but may not be necessary when considering questions that focus on station-level variables. 
+
+The following code chunk selects station name and line, and then uses `distinct()` to obtain all unique combinations. As a result, the number of rows in this dataset is the number of unique stations. .
+
+```{r}
+trans_ent |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+The next code chunk is similar, but filters according to ADA compliance as an initial step. This produces a dataframe in which the number of rows is the number of ADA compliant stations. 
+
+```{r}
+trans_ent |> 
+  filter(ada == TRUE) |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+To compute the proportion of station entrances / exits without vending allow entrance, we first exclude station entrances that do not allow vending. Then, we focus on the `entry` variable -- this logical, so taking the mean will produce the desired proportion (recall that R will coerce logical to numeric in cases like this).
+
+```{r}
+trans_ent |> 
+  filter(vending == "NO") |> 
+  pull(entry) |> 
+  mean()
+```
+
+Lastly, we write a code chunk to identify stations that serve the A train, and to assess how many of these are ADA compliant. As a first step, we tidy the data as alluded to previously; that is, we convert `route` from wide to long format. After this step, we can use tools from previous parts of the question (filtering to focus on the A train, and on ADA compliance; selecting and using `distinct` to obtain dataframes with the required stations in rows).
+
+```{r}
+trans_ent |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") |> 
+  filter(route == "A") |> 
+  select(station_name, line) |> 
+  distinct()
+
+trans_ent |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_num",
+    values_to = "route") |> 
+  filter(route == "A", ada == TRUE) |> 
+  select(station_name, line) |> 
+  distinct()
+```
+
+
+
+### Problem 2
+
+First we clean the Mr. Trash Wheel dataset and round the number of sports balls to the nearest integer. Because the data import process parses the `year` variable as a character, we convert this to numeric. Lastly, note that the `homes_powered` variable is incorrectly specified in the original dataset, so we re-compute this according to the "Homes powered note".
+
+```{r clean_trash}
+mr_trash_wheel = 
+  read_excel(
+    "data/202409 Trash Wheel Collection Data.xlsx",
+    sheet = "Mr. Trash Wheel", range = cell_cols("A:N")) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    wheel = "Mr",
+    sports_balls = round(sports_balls),
+    year = as.numeric(year), 
+    homes_powered = weight_tons * 500 / 30
+    )
+```
+
+Next, we use a similar process to import the Professor Trash Wheel data. 
+
+```{r clean_prof}
+prof_trash_wheel = 
+  read_excel(
+    "data/202409 Trash Wheel Collection Data.xlsx",
+    sheet = "Professor Trash Wheel", range = cell_cols("A:M")) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    wheel = "Prof")
+```
+
+Lastly, we import the Gwynnda Trash Wheel data. 
+
+```{r clean_gwynnda}
+gwynnda_trash_wheel = 
+  read_excel(
+    "data/202409 Trash Wheel Collection Data.xlsx",
+    sheet = "Gwynnda Trash Wheel", range = cell_cols("A:L")) |>
+  janitor::clean_names() |>
+  drop_na(dumpster) |>
+  mutate(
+    wheel = "Gwynnda")
+```
+
+The next code chunk combines these dataframes. 
+
+```{r}
+combined_trashwheel_df = 
+	bind_rows(mr_trash_wheel, prof_trash_wheel, gwynnda_trash_wheel)
+```
+
+So what's going on in this dataset? It dataset has `r nrow(combined_trashwheel_df)` observations and `r ncol(combined_trashwheel_df)` variables. Other than `month` and `date`, all variables are `numeric`. These contain the overall weight of trash collected by each dumpster, as well as details about the composition of this trash (e.g. plastic, glass, and other trash components). Dumpsters are collected when they are filled, and the year, month, and date of collection is available as well. An approximate calculation for the number of homes powered for one day by the trash in the dumpster is included, assuming that each ton of trash generates 500 KW and an average home uses 30 KW of energy for a day.
+
+Across all available data, the total weight (in tons) of trash collected by Professor Trash Wheel was `r combined_trashwheel_df |> filter(wheel == "Prof") |> pull(weight_tons) |> sum()`. In June 2022, the total number of cigarette butts collected by Gwynnda was `r combined_trashwheel_df |> filter(wheel == "Gwynnda", year == 2022, month == "June") |> pull(cigarette_butts) |> sum()`. 
+
+
+### Problem 3
+
+To get started, we'll import and clean the three datasets  containing information about individual bakers, their bakes, and their performance. 
+
+First, we import the `bakers.csv` dataset. We note that this includes a variable for baker name, which we separate into first and last name for consistency with other datasets. We also include series as the first variable in the dataset, and arrange by series number and baker first name. 
+
+```{r}
+bakers_df = 
+  read_csv("data/gbb_datasets/bakers.csv") |> 
+  janitor::clean_names() |> 
+  separate(baker_name, into = c("baker", "baker_last"), sep = " ") |> 
+  relocate(series) |> 
+  arrange(series, baker)
+```
+
+Next, we import the `bakes.csv` dataset. Here, missing values are included in several formats, and we specify those as part of the `read_csv()` call.
+
+```{r}
+bakes_df = 
+  read_csv(
+    "data/gbb_datasets/bakes.csv", 
+    na = c("", "N/A", "UNKNOWN", "Unknown")) |> 
+  janitor::clean_names()
+```
+
+Finally, we import the `results.csv` dataset. Although it's not necessary, we also convert the result to sentence case. 
+
+```{r}
+results_df = 
+  read_csv("data/gbb_datasets/results.csv", skip = 2) |> 
+  janitor::clean_names() |> 
+  mutate(result = str_to_sentence(result)) 
+```
+
+There are a few data issues I want to resolve before creating a final dataset. Although I'm not showing it below, just joining `bakes_df` and `results_df` on `baker` gives a warning -- some bakers in different series have the same name. As a result, I'll be careful to join using `baker` and `series` (and `episode` where necessary).
+
+I'm going to use `anti_join()` to examine differences in `bakers_df` and `bakes_df`. 
+
+```{r}
+anti_join(bakes_df, bakers_df, by = c("series", "baker"))
+anti_join(bakers_df, bakes_df, by = c("series", "baker"))
+```
+
+In series 2, one baker is denoted `"Jo"` in `bakes_df` but `Jo` in bakers. These are probably the same person, and I'll fix that below. I also note that `bakes_df` only extends through series 8, although we have bakers through series 10. 
+
+```{r}
+anti_join(bakes_df, results_df, by = c("series", "baker", "episode"))
+anti_join(results_df, bakes_df, by = c("series", "baker", "episode"))
+```
+
+Taking a look at some of the `anti_join()` results that focus on `results_df` are a bit trickier, but the second result -- which has 596 rows -- is worth discussing. Given the issues around `Jo` vs `"Jo"`, taking a close look at Series 2 shows we now have `Joanna` as well; again, I'm going to assume this is one person and recode below. 
+
+In most other cases, bakers in `result_df` but not in `bakes_df` have `NA` values for `result`. Effectively, once participants are `Out` they no longer appear in `bakes_df` but are retained in `results`. The one exception is Diana, in Series 5, who seems to have withdrawn partway through but still shows up as "In". Below, we remove anyone missing a `result` and also Diana after she withdrew. 
+
+The next code chunk carries out some data recoding and then merges the results to a final clean dataset. Note that I merge `bakes_df` into `results_df` as a first step -- this ensures that we have all episodes and seasons in the final dataset, rather than stopping at Series 8.
+
+```{r}
+bakes_df = 
+  bakes_df |> 
+  mutate(baker = if_else(baker == "\"Jo\"", "Jo", baker))
+
+results_df = 
+  results_df |> 
+  mutate(
+    baker = if_else(baker == "Joanne", "Jo", baker),
+    result = if_else(baker == "Diana" & episode > 5, NA, result)
+  ) |> 
+  drop_na(result)
+
+gbb_df = 
+  full_join(results_df, bakes_df, by = c("series", "episode", "baker")) |> 
+  full_join(x = _, bakers_df, by = c("series", "baker")) |> 
+  select(series, episode, baker, baker_last:hometown, everything())
+```
+
+The final dataset contains `r nrow(gbb_df)` rows and `r ncol(gbb_df)` variables. Key variables include the bakers' names, the name of the signature and showstopper bakes in each episode, and whether the were "Star Baker" or overall "Winner". The show has featured `r nrow(bakers_df)` unique bakers with average age `r bakers_df |> pull(baker_age) |> mean()` (minimum and maximum ages are `r bakers_df |> pull(baker_age) |> min()` and `r bakers_df |> pull(baker_age) |> max()`, respectively). 
+
+A table showing Star Baker and Winner for all Series 5 and beyond is below.
+
+```{r}
+gbb_df |> 
+  filter(series >= 5, result %in% c("Star baker", "Winner")) |> 
+  select(series, episode, baker) |> 
+  pivot_wider(
+    names_from = series, 
+    values_from = baker,
+    names_prefix = "Series "
+  ) |> 
+  knitr::kable()
+```
+
+Some season winners were surprising! David was never Star Baker but won overall, and in that season both Steph and Alice had 3+ Star Bakers. In other Series 6, though, Nadiya performed consistently well, especially in the second have of the Series. 
+
+Lastly, we'll import, tidy, and clean data on viewership. This data is presented in "wide" format, so a key step is converting to "long" format. The additional tidying is fairly minor -- making sure series is a numeric variable, organizing variables and arranging rows, and dropping rows with no viewers. The first ten rows are shown below. 
+
+```{r}
+viewership_df = 
+  read_csv("data/gbb_datasets/viewers.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    cols = series_1:series_10, 
+    names_to = "series",
+    values_to = "viewers",
+    names_prefix = "series_"
+  ) |> 
+  mutate(series = as.numeric(series)) |> 
+  relocate(series) |> 
+  arrange(series, episode) |> 
+  drop_na(viewers)
+
+head(viewership_df, 10)
+```
+
+The average viewership in seasons 1 and 5 are `r viewership_df |> filter(series == 1) |> pull(viewers) |> mean()` and `r viewership_df |> filter(series == 5) |> pull(viewers) |> mean()`, respectively.
+
+
