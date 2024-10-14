@@ -29,7 +29,7 @@ weather_df =
   select(name, id, everything())
 ```
 
-Let's make some plots
+Let's make some plots [Visualization ]
 
 ```{r}
 weather_df |> 
@@ -51,7 +51,8 @@ weather_df |>
 ```
 
 
-## group_by()
+## group_by() 
+用这个function, 可以从dataset里抽取自己想要的数据, 生成新的table, 以此做表
 
 ```{r}
 weather_df |> 
@@ -75,7 +76,7 @@ weather_df |>
 
 
 
-## 2x2 
+## 2x2 table
 
 ```{r}
 weather_df |> 
@@ -99,7 +100,7 @@ weather_df |>
       tmax >=5 ~ "not_cold"
     )
   ) |> 
-  janitor::tabyl(name, cold)
+  janitor::tabyl(name, cold)。## 直接做出2*2 table
 ```
 
 ## general numeric summaries.
@@ -145,7 +146,8 @@ weather_df |>
     values_from = mean_tmax
   ) |> 
   knitr::kable(
-    digits = 3, 
+    digits = 3, # 保留3位decimals
+
     col.names = c("Month", "Central Park", "Molokai", "Waterhole"))
 ```
 
@@ -154,7 +156,7 @@ weather_df |>
 
 ```{r}
 weather_df |> 
-  group_by(name) |> 
+  group_by(name) |>        # group很容易忘,invisible
   mutate(
     mean_tmax = mean(tmax, na.rm = TRUE),
     centered_tmax = tmax - mean_tmax) |> 
@@ -162,13 +164,13 @@ weather_df |>
   geom_point()
 ```
 
-Find hottest / coldest days.
+Find hottest / coldest days. (排序)
 
 ```{r}
 weather_df |> 
-  group_by(name) |> 
+  group_by(name) |>  
   mutate(
-    temp_rank = min_rank(desc(tmax))
+    temp_rank = min_rank(desc(tmax))  # 筛选tmax最低的排序
   ) |> 
   filter(temp_rank < 4)
 
@@ -179,7 +181,7 @@ weather_df |>
   arrange(tmax)
 ```
 
-
+### 如何得知”变化量“(与上一个值的差值) “change” "variation"
 ```{r}
 weather_df |> 
   group_by(name) |> 
@@ -189,8 +191,6 @@ weather_df |>
   ) |> 
   filter(min_rank(temp_change) < 3)
 ```
-
-
 
 ```{r}
 weather_df |> 
@@ -203,7 +203,7 @@ weather_df |>
     sd_tmax_change = sd(temp_change, na.rm = TRUE)
   )
 ```
-
+revisiting examples
 
 
 
@@ -249,6 +249,7 @@ fas_df =
 Compute a table that we care about.
 
 ```{r}
+# get the data in the format you want is the most important
 fas_df |> 
   drop_na(dose) |> 
   group_by(dose, tx_day) |> 

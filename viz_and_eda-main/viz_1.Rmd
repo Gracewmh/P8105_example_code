@@ -111,6 +111,7 @@ LA plot:
 
 ```{r}
 weather_df |> 
+# Only see on subset of the whole data set
   filter(name == "CentralPark_NY") |> 
   mutate(
     tmax_fahr = tmax * (9 / 5) + 32,
@@ -128,6 +129,7 @@ weather_df |>
 weather_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
   geom_point(aes(color = name), alpha = .3, size = .8) + 
+# can remove the points(then just delete the above one line)
   geom_smooth(se = FALSE)
 ```
 
@@ -135,17 +137,24 @@ weather_df |>
 weather_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
   geom_hex()
+#density plot(当数据量很大的时候, 很有用)
 ```
 
 
 ```{r}
+# the points turn blue
 weather_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
   geom_point(color = "blue")
+
+# the points may not be blue but they would be named as a varaible "blue"
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = "blue")) + 
+  geom_point()
 ```
 
 ## Univariate plots
-
+### Histogram
 ```{r}
 weather_df |> 
   ggplot(aes(x = tmin)) + 
@@ -154,34 +163,35 @@ weather_df |>
 
 ```{r}
 weather_df |> 
-  ggplot(aes(x = tmin, fill = name)) + 
+  ggplot(aes(x = tmin, fill = name)) + # fill different color in different name groups(分组)
   geom_histogram(position = "dodge")
 ```
 
 how would i fix this? maybe facet?
 
+#### @@@ separately histogram @@@
 ```{r}
 weather_df |> 
   ggplot(aes(x = tmin, fill = name)) + 
   geom_histogram() + 
   facet_grid(. ~ name)
 ```
-
+#### @@@ Smooth histogram @@@
 maybe a density plot?
 
 ```{r}
 weather_df |> 
   ggplot(aes(x = tmin, fill = name)) + 
-  geom_density(alpha = .3)
+  geom_density(alpha = .3) #设置透明度
 ```
-
+#### @@@ Box Plot @@@
 ```{r}
 weather_df |> 
   ggplot(aes(x = name, y = tmin, fill = name)) + 
   geom_boxplot()
 ```
 
-violin plots
+#### @@@ Violin plots @@@
 
 ```{r}
 weather_df |> 
@@ -189,8 +199,8 @@ weather_df |>
   geom_violin()
 ```
 
-ridge plot
-
+#### @@@ ridge plot @@@
+each density seperately, compare across different groups
 ```{r}
 weather_df |> 
   ggplot(aes(x = tmin, y = name)) +
