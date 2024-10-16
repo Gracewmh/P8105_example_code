@@ -1,0 +1,151 @@
+---
+title: "Reading Data From the Web"
+output: github_document
+---
+
+```{r, include = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+Load the necessary libraries. 
+
+```{r}
+library(rvest)
+library(httr)
+```
+
+```{r}
+url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+drug_use_html = read_html(url)
+```
+
+Get the pieces I actually need.
+
+```{r}
+marj_use_df = 
+  drug_use_html |> 
+  html_table() |> 
+  first() |> 
+  slice(-1)
+```
+
+Read in cost of living data.
+
+```{r}
+nyc_cost_df = 
+  read_html("https://www.bestplaces.net/cost_of_living/city/new_york/new_york") |> 
+  html_table(header = TRUE) |> 
+  first()
+```
+
+
+## CSS Selectors!!
+
+```{r}
+swm_url = "https://www.imdb.com/list/ls070150896/"
+
+swm_html = read_html(swm_url)
+```
+
+
+```{r}
+swm_title_vec = 
+  swm_html |> 
+  html_elements(".ipc-title-link-wrapper .ipc-title__text") |> 
+  html_text()
+
+swm_runtime_vec = 
+  swm_html |> 
+  html_elements(".dli-title-metadata-item:nth-child(2)") |> 
+  html_text()
+
+swm_score_vec = 
+  swm_html |> 
+  html_elements(".metacritic-score-box") |> 
+  html_text()
+
+swm_df = 
+  tibble(
+    title = swm_title_vec,
+    runtime = swm_runtime_vec,
+    score = swm_score_vec,
+  )
+```
+
+
+Let's import some books.
+
+```{r}
+books_html = read_html("http://books.toscrape.com")
+
+books_html |> 
+  html_elements(".price_color") |> 
+  html_text()
+```
+
+
+
+
+## Use API
+
+Get water data.
+
+```{r}
+nyc_water = 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") |> 
+  content()
+```
+
+Get BRFSS data
+
+```{r}
+brfss_df = 
+  GET("https://chronicdata.cdc.gov/resource/acme-vg9e.csv",
+      query = list("$limit" = 5000)) |> 
+  content()
+```
+
+
+
+Pokemon API
+
+
+```{r}
+pokemon = 
+  GET("https://pokeapi.co/api/v2/pokemon/ditto") |> 
+  content()
+
+pokemon
+```
+
+
+
+
+```{r}
+pokemon$height
+pokemon$abilities
+```
+
+
+
+
+
