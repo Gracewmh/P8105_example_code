@@ -43,8 +43,8 @@ Get the pieces I actually need.
 ```{r}
 marj_use_df = 
   drug_use_html |> 
-  html_table() |> 
-  first() |> 
+  html_table() |> # take the html data into table
+  first() |> # take the first elements
   slice(-1)
 ```
 
@@ -55,6 +55,7 @@ nyc_cost_df =
   read_html("https://www.bestplaces.net/cost_of_living/city/new_york/new_york") |> 
   html_table(header = TRUE) |> 
   first()
+head(nyc_cost_df)
 ```
 
 
@@ -70,8 +71,8 @@ swm_html = read_html(swm_url)
 ```{r}
 swm_title_vec = 
   swm_html |> 
-  html_elements(".ipc-title-link-wrapper .ipc-title__text") |> 
-  html_text()
+  html_elements(".ipc-title-link-wrapper .ipc-title__text") |> # CSS selecter
+  html_text()# select text in this html
 
 swm_runtime_vec = 
   swm_html |> 
@@ -111,7 +112,7 @@ Get water data.
 
 ```{r}
 nyc_water = 
-  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") |> 
+  GET("https://data.cityofnewyork.us/resource/ia2d-e54m.csv") |>  #GET  
   content()
 ```
 
@@ -120,7 +121,7 @@ Get BRFSS data
 ```{r}
 brfss_df = 
   GET("https://chronicdata.cdc.gov/resource/acme-vg9e.csv",
-      query = list("$limit" = 5000)) |> 
+      query = list("$limit" = 5000)) |>  #only the first 5000 data
   content()
 ```
 
