@@ -39,12 +39,12 @@ library(p8105.datasets)
 
 ```{r}
 string_vec = c("my", "name", "is", "jeff")
+string_vec
+str_detect(string_vec, "jeff") # 判断
 
-str_detect(string_vec, "jeff")
+str_replace(string_vec, "jeff", "Jeff") # find "jeff" and replace jeff to Jeff
 
-str_replace(string_vec, "jeff", "Jeff")
-
-str_replace(string_vec, "e", "E")
+str_replace(string_vec, "e", "E") # find "e" and replace e to E
 ```
 
 
@@ -57,10 +57,10 @@ string_vec = c(
   "it will be fun, i think"
   )
 
-str_detect(string_vec, "i think")
+str_detect(string_vec, "i think") # anywhere in line
 
-str_detect(string_vec, "^i think")
-str_detect(string_vec, "i think$")
+str_detect(string_vec, "^i think") # begin like "i think" line
+str_detect(string_vec, "i think$") # the end of the pattern 
 ```
 
 
@@ -79,7 +79,7 @@ str_detect(string_vec, "Pumpkin")
 
 str_detect(string_vec, "PUMPKIN")
 
-str_detect(string_vec, "[Pp]umpkin")
+str_detect(string_vec, "[Pp]umpkin") # Pumpkin or pumpkin but not PUMPKIN
 ```
 
 
@@ -91,7 +91,7 @@ string_vec = c(
   '3AM - cant sleep :('
   )
 
-str_detect(string_vec, "[0-9][a-zA-Z]")
+str_detect(string_vec, "[0-9][a-zA-Z]") # one number followed by one letter (uppercase or lowercase)
 
 ```
 
@@ -105,7 +105,7 @@ string_vec = c(
   'NetBios: scanning ip 203.167.114.66'
   )
 
-str_detect(string_vec, "7.11")
+str_detect(string_vec, "7.11") # 7 + any character + 11 using dot
 ```
 
 how things start to get real strange
@@ -119,7 +119,7 @@ string_vec = c(
   'I found the answer on pages [6-7]'
   )
 
-str_detect(string_vec, "\\[")
+str_detect(string_vec, "\\[") # special character "[" =.  + \\ before the special character
 ```
 
 
@@ -127,16 +127,17 @@ str_detect(string_vec, "\\[")
 
 ```{r}
 sex_vec = factor(c("male", "male", "female", "female"))
-
+sex_vec
 as.numeric(sex_vec)
+sex_vec
 ```
 
 do some releveling ...
 
 ```{r}
-sex_vec = fct_relevel(sex_vec, "male")
+sex_vec = fct_relevel(sex_vec, "male") ##tell which one come as the first (here male at the first)
 
-as.numeric(sex_vec)
+as.numeric(sex_vec) 
 ```
 
 
@@ -162,25 +163,27 @@ marj_use_df =
   slice(-1) |> 
   select(-contains("P Value")) |> 
   pivot_longer(
-    cols = -State,
+    cols = -State,# pivot everything but not state
     names_to = "age_year",
     values_to = "percent"
   ) |> 
-  separate(age_year, into = c("age", "year"), sep = "\\(") |> 
+  # seperate age and year 
+  separate(age_year, into = c("age", "year"), sep = "\\(") |>  # 拆成两列,以“C”分
   mutate(
     year = str_replace(year, "\\)", ""), 
-    percent = str_remove(percent, "[a-c]$"),
+    percent = str_remove(percent, "[a-c]$"), # delete NA before convert to numbers 
     percent = as.numeric(percent)
   )
 ```
 
 ```{r}
+# make a plot
 marj_use_df |> 
   filter(
     age == "12-17",
     !(State %in% c("Total U.S.", "South"))) |> 
   mutate(
-    State = fct_reorder(State, percent)
+    State = fct_reorder(State, percent) # 1st, the varaible I want to reorder, 2nd, reorder according which variable
   ) |> 
   ggplot(aes(x = State, y = percent, color = year)) + 
   geom_point() + 
@@ -203,6 +206,7 @@ rest_inspec |>
     names_from = grade,
     values_from = n
   )
+
 ```
 
 ```{r}
